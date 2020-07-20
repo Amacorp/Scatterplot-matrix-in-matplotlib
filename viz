@@ -1,0 +1,118 @@
+# %% [code]
+import numpy as np
+import pandas as pd
+
+# we don't like warnings
+# you can comment the following 2 lines if you'd like to
+import warnings
+warnings.filterwarnings('ignore')
+
+# Matplotlib forms basis for visualization in Python
+import matplotlib.pyplot as plt
+
+# We will use the Seaborn library
+import seaborn as sns
+sns.set()
+
+# Graphics in retina format are more sharp and legible
+%config InlineBackend.figure_format = 'retina'
+
+# Input data files are available in the read-only "../input/" directory
+# For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
+
+import os
+for dirname, _, filenames in os.walk('/kaggle/input'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+
+# You can write up to 5GB to the current directory (/kaggle/working/) that gets preserved as output when you create a version using "Save & Run All" 
+# You can also write temporary files to /kaggle/temp/, but they won't be saved outside of the current session
+
+# %% [code]
+df = pd.read_csv('../input/mlcourse/telecom_churn.csv')
+df.head()
+
+# %% [code]
+features = ['Total day minutes', 'Total intl calls']
+df[features].hist(figsize=(10, 4))
+
+# %% [code]
+df[features].plot(kind='density', subplots=True, layout=(1, 2), sharex = False, figsize=(10,4))
+
+# %% [code]
+sns.distplot(df['Total intl calls'])
+
+# %% [code]
+sns.boxplot(df['Total intl calls'])
+
+# %% [code]
+_, axes = plt.subplots(1, 2, sharey=True, figsize=(8, 4))
+sns.boxplot(df['Total intl calls'], ax=axes[1]);
+sns.violinplot(df['Total intl calls'], ax=axes[0]);
+
+# %% [code]
+df[features].describe()
+
+# %% [code]
+df['Churn'].value_counts()
+
+# %% [code]
+_, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
+# sns.countplot(x='Churn', data=df, ax=axes[0])
+sns.countplot(df['Churn'], ax=axes[0]);
+# sns.countplot(x='Customer service calls', data=df, ax=axes[1])
+sns.countplot(df['Customer service calls'], ax=axes[1]);
+
+# %% [code]
+# Drop non-numerical variables
+numerical = list(set(df.columns) - set(['State', 'International plan', 'Voice mail plane', 'Area code', 'Churn', 'Coustomer service calls']))
+
+# Calculate and plot
+corr_matrix = df[numerical].corr()
+sns.heatmap(corr_matrix)
+
+# %% [code]
+numerical = list(set(numerical) - set(['Total day charge', 'Total eve charge', 'Total night charge', 'Total intl charge']))
+corr_matrix = df[numerical].corr()
+sns.heatmap(corr_matrix)
+
+# %% [markdown]
+# # Scatter plot
+# The scatter plot displays values of two numerical variables as Cartesian coordinates in 2D space. Scatter plots in 3D are also possible.
+
+# %% [code]
+plt.scatter(df['Total day minutes'], df['Total night minutes'])
+
+# %% [code]
+sns.jointplot(x='Total day minutes', y='Total night minutes', data=df, kind= 'scatter')
+
+# %% [code]
+sns.jointplot('Total day minutes', 'Total night minutes', data=df, kind= 'kde', color='red')
+
+# %% [markdown]
+# # Scatterplot matrix
+# 
+# In some cases, we may want to plot a scatterplot matrix such as the one shown below. Its diagonal contains the distributions of the corresponding variables, and the scatter plots for each pair of variables fill the rest of the matrix.
+
+# %% [code]
+# `pairplot()` may become very slow with the SVG or retina format
+%config InlineBackend.figure_format = 'png'
+sns.pairplot(df[numerical])
+
+# %% [markdown]
+# # Quantitative vs. Categorical
+
+# %% [code]
+sns.lmplot('Total day minutes', 'Total night minutes', data=df, hue='Churn', fit_reg=False)
+
+# %% [code]
+# Sometimes you can analyze an ordinal variable just as numerical one
+numerical.append('Customer service calls')
+
+fig, axes = plt.subplots(nrows=3, ncols=4, figsize=(10, 7))
+for idx, feat in enumerate(numerical):
+    ax = axes[int(idx / 4), idx % 4]
+    sns.boxplot(x='Churn', y=feat, data=df, ax=ax)
+    ax.set_xlabel('')
+    ax.set_ylabel(feat)
+fig.tight_layout();
